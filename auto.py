@@ -12,8 +12,12 @@ img_width=64
 img_height=64
 channel_count=3
 latent_dimension=128
-batch_size=16
+batch_size=32
 epochs = 20
+loss="mse"
+learning_rate=0.0001
+decay=0
+#decay=1e-6
 
 #"D:/Downloads/Images/69000-20221206T023428Z-001/69000"
 image_path="D:\Downloads\Images\dataset-part1"
@@ -47,7 +51,7 @@ next_layer = keras.layers.Conv2D(32,3,padding='same',activation="relu")(encoder_
 next_layer = keras.layers.Conv2D(64,3,padding='same',activation="relu")(next_layer)
 next_layer = keras.layers.Conv2D(64,3,padding='same',activation="relu")(next_layer)
 next_layer = keras.layers.Flatten()(next_layer)
-encoder_output_layer = keras.layers.Dense(latent_dimension,activation="relu")(next_layer)
+encoder_output_layer = keras.layers.Dense(latent_dimension,activation="sigmoid")(next_layer)
 
 encoder_model = keras.Model(encoder_input_layer,encoder_output_layer, name='EncoderModel')
 encoder_model.summary()
@@ -58,7 +62,7 @@ next_layer = keras.layers.Dense(img_width*img_height*3,activation="relu")(decode
 next_layer = keras.layers.Reshape((img_width,img_height,3))(next_layer)
 next_layer = keras.layers.Conv2DTranspose(64,3,padding='same',activation="relu")(next_layer)
 next_layer = keras.layers.Conv2DTranspose(32,3,padding='same',activation="relu")(next_layer)
-decoder_output_layer = keras.layers.Conv2D(3,3,padding='same',activation="relu")(next_layer)
+decoder_output_layer = keras.layers.Conv2D(3,3,padding='same',activation="sigmoid")(next_layer)
 
 decoder_model = keras.Model(decoder_input_layer,decoder_output_layer, name='DecoderModel')
 decoder_model.summary()
@@ -66,10 +70,10 @@ decoder_model.summary()
 autoencoder = keras.Model(encoder_input_layer,decoder_output_layer,name="autoencoder")
 autoencoder.summary()
 
-opt = keras.optimizers.Adam(learning_rate=0.001,decay=1e-6)
-opt = keras.optimizers.Adam(1e-4)
+opt = keras.optimizers.Adam(learning_rate=learning_rate,decay=decay)
+#opt = keras.optimizers.Adam(1e-4)
 
-autoencoder.compile(opt,loss="mse")
+autoencoder.compile(opt,loss=loss)
 autoencoder.fit(normalized_ds,validation_data=normalized_validation_ds,epochs=epochs)
 
 out = autoencoder.predict(validation_ds)
